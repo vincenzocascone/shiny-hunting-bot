@@ -5,11 +5,12 @@ This is a simple Arduino build that is capable of shiny hunting legendaries in 4
 # How is it built
 
 I only used some basic Arduino components such as:
+- a basic Arduino board
 - 2 servo motors that are used to press the nintendo A button and START button
 - a photoresistor, used to sense a light change in the nintendo's screen
 - 2 input buttons that you can use in order to save the current session's number of SRs or change some settings
 - an LCD display that shows some info like the SRs counter and the servos fail %
-Lastly I used some lego bricks to build the structure
+- lastly I used some lego bricks to build the structure
 
 # How does it work
 
