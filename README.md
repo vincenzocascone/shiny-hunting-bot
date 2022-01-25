@@ -2,6 +2,8 @@
 
 This is a simple Arduino build that is capable of shiny hunting legendaries in 4th generation pokemon games through soft resetting.
 
+![DSC_9181](https://user-images.githubusercontent.com/94491363/151028208-cc47c95d-c850-4d97-adab-d11d3cb21ca8.jpg)
+
 # How is it built
 
 I only used some basic Arduino components such as:
@@ -12,6 +14,9 @@ I only used some basic Arduino components such as:
 - an LCD display that shows some info like the SRs counter and the servos fail %
 - an elastic band to keep the nintendo's back buttons pressed and a weight to do the same for the SELECT button
 - lastly I used some lego bricks to build the structure
+
+![DSC_9196](https://user-images.githubusercontent.com/94491363/151029009-72e00bdd-3384-4df0-9e77-08b9877b6db3.jpg)
+
 
 # How does it work
 
