@@ -160,19 +160,10 @@ void loop()
         lcd.setCursor(4, 0);
         lcd.print(counter);
 
-        // If the shininess is true the cycle stops
-        if (shiny == true)
-        {
-            for (int a = 0; a < 1000000000000; a++)
-            {
-                lcd.setCursor(0, 1);
-                lcd.print("*Shiny*   ;)");
-                for (int a = 0; a < 10000000000000; a++)
-                {
-                    delay(100000);
-                }
-                delay(1000);
-            }
+        // If the shininess is true the cycle stops   
+        while (shiny==true) {
+            lcd.setCursor(0, 1);
+            lcd.print("*Shiny*   ;)");
         }
 
         // Checks if the SR failed or not
