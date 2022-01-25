@@ -24,8 +24,20 @@ The system uses one servo to press the A button in order to go through the initi
 after a non shiny encouter. In order to check the shininess of the pokemon it uses the photoresistor, which is placed in front of the screen, precisely pointing the area  where your pokemon's 
 healthbar is located during the fight scene. When the healthbar displays, there's a change in light sensed by the photoresistor. If the pokemon is shiny, the animation 
 of the encounter lasts longer, so the bar is displayed with a small delay that it's actually used to check the shininess. When the pokemon isn't shiny the whole cycle starts 
-again with a soft reset. If the pokemon is shiny the bot stops and waits for you to try and catch it. In order to start the bot, the right arduino button must be pressed. While the bot is hunting you can see the SRs counter on the LCD 
+again with a soft reset. If the pokemon is shiny the bot stops and waits for you to try and catch it. 
+
+
+https://user-images.githubusercontent.com/94491363/151034627-f73ab602-defb-47f1-a0d7-7a72ad3f1789.mp4
+
+# How to use it
+In order to start the bot, the right arduino button must be pressed. While the bot is hunting you can see the SRs counter on the LCD 
 display and you can also check if the servos are working fine through the fail % displayed. In order to save the number of SRs executed in the current session you must
 press the left button after the START button is pressed and before the A button is pressed for the first time in the cycle. If you do so, besides saving, you also enter a 
 menu in which you can set the light value that suits the best with the ambient light. In order to exit the menu you just need to press both the buttons together.
 After you have saved you can just turn off the arduino board and the next time you turn it on the counter will start from the previous number saved.
+
+
+
+
+
+
