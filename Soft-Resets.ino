@@ -47,6 +47,7 @@ void pressbuttonA(int angle)
 }
 
 void pressbuttonSTART(int angle)
+{
     for (int pos = 0; pos <= angle; pos += 1)
     {
         myservo2.write(pos);
