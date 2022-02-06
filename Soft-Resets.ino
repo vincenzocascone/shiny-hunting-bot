@@ -47,6 +47,7 @@ void pressbuttonA(int angle)
 }
 
 void pressbuttonSTART(int angle)
+{
     for (int pos = 0; pos <= angle; pos += 1)
     {
         myservo2.write(pos);
@@ -161,7 +162,7 @@ void loop()
         lcd.print(counter);
 
         // If the shininess is true the cycle stops   
-        while (shiny==true) {
+        while (shiny == true) {
             lcd.setCursor(0, 1);
             lcd.print("*Shiny*   ;)");
         }
