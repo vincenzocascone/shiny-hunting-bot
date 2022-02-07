@@ -18,17 +18,18 @@ LiquidCrystal lcd(7, 8, 9, 10, 11, 12);
 //--------------- All Variables ---------------------------
 
 const int LIGHT = 0;    // Light Sensor on Analog Pin 0
+int j = 0;              // Cicle counter
 int val = 0;            // Variable to hold the analog light reading
-int buttonApin = 6;     // Right button for starting the bots
+int buttonApin = 6;     // Right button for starting the bot
 int buttonBpin = 5;     // Left button to save or access the menu
 int lval = 210;         // Value for detection of a change in the light intensity
 int lvalwait = 140;     // Value for detection of a change in the light intensity
 int y = 0;              // Variable used for false light signal detection
 int counter = 0;        // main counter of the total SRs
-int dailycounter = 0;   // counter of the daily SRs
-int fails = 0;          // keeps track of failed servo presses
-int fails2 = 0;         // keeps track of other fails
-int FailPerc = 0;       // fails in %
+int dailycounter = 0;   // Counter of the daily SRs
+int fails = 0;          // Keeps track of failed servo presses
+int fails2 = 0;         // Keeps track of other fails
+int FailPerc = 0;       // Fails in %
 bool beginning = false; // Run condition
 bool shiny = false;     // Shiny condition
 bool control = false;   // Light change condition
@@ -142,6 +143,7 @@ void loop()
 
         while (wait == true)
         {
+          j++;
           pressbuttonA(23);
           val = analogRead(LIGHT);
           lcd.setCursor(11, 0);
@@ -163,9 +165,14 @@ void loop()
               delay(1);
           }
           lcd.print(wait);
+          if (j > 45)
+          {
+            fails++;
+            break;
+          }
         }
      
-
+        j=0;
         y = 0;
         wait = true;
         lcd.clear();
