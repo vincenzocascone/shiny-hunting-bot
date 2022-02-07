@@ -200,14 +200,14 @@ void loop()
         {
             EEPROM.put(0, counter);
             beginning = false;
-            lcd.clear();
+            lcd.clear();    
             lcd.setCursor(0, 1);
             lcd.print("Today's SRs: ");
             lcd.setCursor(12, 1);
             lcd.print(dailycounter);
 
             // Left button to decrease by 5 or right button to increase by 5 | Press both to exit the menu
-            for (int s = 0; s < 100000000; s++)
+            while (beginning == true)
             {
                 if (digitalRead(buttonApin) == LOW)
                 {
