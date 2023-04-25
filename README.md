@@ -30,4 +30,3 @@ https://user-images.githubusercontent.com/94491363/151034627-f73ab602-defb-47f1-
 3. Press the left button to save the current session's SR count and access the settings menu.
 4. Press both buttons to exit the settings menu.
 
-|![MoltresShiny](https://user-images.githubusercontent.com/94491363/152589351-588121e2-8a8e-42b1-81b6-66b8ee25d786.jpg)|![MoltresShinyLCD](https://user-images.githubusercontent.com/94491363/152590698-a25d5c28-6564-4966-9e4b-b2c159cf09d3.jpg)|
