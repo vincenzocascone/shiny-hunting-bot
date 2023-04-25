@@ -1,304 +1,270 @@
-//--------------- All libraries ---------------------------
+#include <EEPROM.h>
+#include <LiquidCrystal.h>
+#include <Servo.h>
 
 // Servos for pressing buttons
-#include <Servo.h>
-Servo myservo1; // Presses A button pin2
-Servo myservo2; // Presses start button pin4
-Servo myservo3; // Presses arrow up pin3
-int pos = 0;
+Servo servo1; // Presses A button pin2
+Servo servo2; // Presses start button pin4
+Servo servo3; // Presses arrow up pin3
 
-// Library for non volatile variables
-#include <EEPROM.h>
-
-// Library for the lcd display
-#include <LiquidCrystal.h>
-//Pins            BS  E  D4 D5  D6 D7
+// LiquidCrystal display
+//Pins            RS  E  D4 D5  D6 D7
 LiquidCrystal lcd(7, 8, 9, 10, 11, 12);
 
-//--------------- All Variables ---------------------------
+// Global constants and variables
+const int LIGHT_SENSOR_PIN = 0; // Light Sensor on Analog Pin 0
+const int BUTTON_A_PIN = 6;     // Right button for starting the bot
+const int BUTTON_B_PIN = 5;     // Left button to save or access the menu
 
-const int LIGHT = 0;    // Light Sensor on Analog Pin 0
-int j = 0;              // Cicle counter
-int val = 0;            // Variable to hold the analog light reading
-int buttonApin = 6;     // Right button for starting the bot
-int buttonBpin = 5;     // Left button to save or access the menu
-int lval = 210;         // Value for detection of a change in the light intensity
-int lvalwait = 140;     // Value for detection of a change in the light intensity
-int y = 0;              // Variable used for false light signal detection
-int counter = 0;        // main counter of the total SRs
-int dailycounter = 0;   // Counter of the daily SRs
-int fails = 0;          // Keeps track of failed servo presses
-int fails2 = 0;         // Keeps track of other fails
-int FailPerc = 0;       // Fails in %
-bool beginning = false; // Run condition
-bool shiny = false;     // Shiny condition
-bool control = false;   // Light change condition
-bool wait = true;       // Helps to avoid a failed SR because of servo malfunction
+const int DETECTION_VALUE = 210;
+const int WAIT_DETECTION_VALUE = 140;
 
-//--------------- Void functions  ---------------------------
-void pressbuttonA(int angle)
-{
-    for (int pos = 0; pos <= angle; pos += 1)
-    {
-        myservo1.write(pos);
-        delay(15);
-    }
-    for (pos = angle; pos >= 0; pos -= 1)
-    {
-        myservo1.write(pos);
-        delay(15);
-    }
+int cycleCounter = 0;           // Cycle counter
+int lightValue = 0;             // Variable to hold the analog light reading
+int totalCounter = 0;           // Main counter of the total SRs
+int dailyCounter = 0;           // Counter of the daily SRs
+int failCounter = 0;            // Keeps track of failed servo presses
+int failPercentage = 0;         // Fails in %
+bool isRunning = false;         // Run condition
+bool isShiny = false;           // Shiny condition
+bool isControlled = false;      // Light change condition
+bool isWaiting = true;          // Helps to avoid a failed SR because of servo malfunction
+
+// Function prototypes
+void pressButtonA(int angle);
+void pressButtonSTART(int angle);
+void pressButtonUP(int angle);
+void updateLCD();
+void softReset();
+void adjustThreshold();
+
+void setup() {
+  // Serial setup
+  Serial.begin(9600);
+
+  // Button setup
+  pinMode(BUTTON_A_PIN, INPUT_PULLUP);
+  pinMode(BUTTON_B_PIN, INPUT_PULLUP);
+
+  // LCD setup
+  lcd.begin(16, 2);
+
+  // Servo setup
+  servo1.attach(2);
+  servo2.attach(4);
+  servo3.attach(3);
+
+  // Assign counter the value stored in EEPROM address 0
+  EEPROM.get(0, totalCounter);
 }
 
-void pressbuttonSTART(int angle)
-{
-    for (int pos = 0; pos <= angle; pos += 1)
-    {
-        myservo2.write(pos);
-        delay(15);
+void loop() {
+  // Initial servo position
+  servo1.write(0);
+  servo2.write(0);
+  servo3.write(35);
+
+  // Main cycle
+  if (digitalRead(BUTTON_A_PIN) == LOW || isRunning) {
+    isRunning = true;
+
+    updateLCD();
+
+    // Press the buttons in sequence to get to the encounter
+    pressButtonA(23);
+    delay(1300);
+    pressButtonA(23);
+    delay(2900);
+    pressButtonA(23);
+    delay(2800);
+    pressButtonUP(35);
+    delay(2500);
+    pressButtonA(23);
+    delay(4800);
+
+    // Wait for encounter and check for fail
+    while (isWaiting) {
+      cycleCounter++;
+      pressButtonA(23);
+      lightValue = analogRead(LIGHT_SENSOR_PIN);
+      lcd.setCursor(11, 0);
+      lcd.print("L=   ");
+      lcd.setCursor(13, 0);
+      lcd.print(lightValue);
+      lcd.setCursor(0, 1);
+      delay(1000);
+
+      for (int i = 0; i < 100; i++) {
+        if (lightValue < WAITDETECTION_VALUE) {
+            cycleCounter++;
+            if (cycleCounter > 2) {
+                isWaiting = false;
+            }
+        }
+        delay(1);
+      }
+        
+      lcd.print(isWaiting);
+
+      if (cycleCounter > 45) {
+        failCounter++;
+        break;
+      }
     }
-    for (pos = angle; pos >= 0; pos -= 1)
-    {
-        myservo2.write(pos);
-        delay(15);
-    }
-}
 
-void pressbuttonUP(int angle)
-{
-    for (int pos = angle; pos >= 0; pos -= 1)
-    {
-        myservo3.write(pos);
-        delay(15);
-    }
-    for (pos = 0; pos <= angle; pos += 1)
-    {
-        myservo3.write(pos);
-        delay(15);
-    }
-}
+    cycleCounter = 0;
+    isWaiting = true;
+    lcd.clear();
+    delay(3800);
 
+    // Press the buttons in sequence to finish the encounter
+    pressButtonA(23);
+    delay(1500);
+    pressButtonA(23);
+    delay(1500);
+    pressButtonA(23);
+    delay(7500);
 
-//--------------- Arduino setup ---------------------------
-void setup()
-{
-    // Serial setup
-    Serial.begin(9600);
+    // Check for shininess
+    for (int i = 0; i < 1950; i++) {
+      lightValue = analogRead(LIGHT_SENSOR_PIN);
+      lcd.setCursor(11, 0);
+      lcd.print("L=   ");
+      lcd.setCursor(13, 0);
+      lcd.print(lightValue);
+      lcd.setCursor(0, 1);
+      lcd.print(isControlled);
 
-    // Button setup
-    pinMode(buttonApin, INPUT_PULLUP);
-    pinMode(buttonBpin, INPUT_PULLUP);
+      if (lightValue < DETECTION_VALUE) {
+        cycleCounter++;
 
-    // LCD setup
-    lcd.begin(16, 2);
-
-    // Servo setup
-    myservo1.attach(2);
-    myservo2.attach(4);
-    myservo3.attach(3);
-
-    //Assign counter the value stored in EEPROM address 0
-    EEPROM.get(0, counter);
-}
-
-//------------------ Main Loop ---------------------------
-void loop()
-{
-    // Initial servo position
-    myservo1.write(0);
-    myservo2.write(0);
-    myservo3.write(35);
-
-    // Main cycle
-    if (digitalRead(buttonApin) == LOW or beginning == true) //Press the right button to start the hunt
-    {
-
-        beginning = true;
-
-        // Display counter and fails info on the lcd
-        lcd.clear();
-        lcd.setCursor(0, 0);
-        lcd.print("SRs=");
-        lcd.setCursor(4, 0);
-        lcd.print(counter);
-        lcd.setCursor(10, 1);
-        lcd.print("F=");
-        lcd.setCursor(12, 1);
-        lcd.print(FailPerc);
-        lcd.print("%");
-
-        // Servo1 presses 4 times A button in order to get to the encounter
-        pressbuttonA(23);
-        delay(1300);
-        pressbuttonA(23);
-        delay(2900);
-        pressbuttonA(23);
-        delay(2800);
-
-        pressbuttonUP(35);
-        delay(2500);
-        pressbuttonA(23);
-        delay(4800);
-
-
-        while (wait == true)
-        {
-          j++;
-          pressbuttonA(23);
-          val = analogRead(LIGHT);
-          lcd.setCursor(11, 0);
-          lcd.print("L=   ");
-          lcd.setCursor(13, 0);
-          lcd.print(val);
-          lcd.setCursor(0, 1);
-          delay (1000);
-          for (int i = 0; i < 100; i++)
-          {
-              if ( val < lvalwait)
-              {
-                y++;
-                if (y > 2)
-                {
-                  wait = false;
-                }
-              }
-              delay(1);
+        if (cycleCounter > 2 && i > 1500 && !isControlled) {
+          isShiny = true;
+        } else {
+          if (cycleCounter > 2 && i > 500) {
+            isControlled = true;
           }
-          lcd.print(wait);
-          if (j > 45)
-          {
-            fails++;
+        }
+      } else {
+        cycleCounter = 0;
+      }
+      delay(1);
+    }
+
+    // Update counters and display
+    cycleCounter = 0;
+    totalCounter++;
+    dailyCounter++;
+    updateLCD();
+
+    // If shiny, display message and halt loop
+    while (isShiny) {
+      lcd.setCursor(0, 1);
+      lcd.print("*Shiny*   ;)");
+    }
+
+    // Check for failed SRs
+    if (!isShiny && !isControlled) {
+      failCounter++;
+
+      // If the fail percentage is 80% or greater, display message and halt loop
+      if (failPercentage >= 80) {
+        lcd.setCursor(0, 1);
+        lcd.print("Fix");
+        lcd.print(failPercentage);
+      }
+    }
+
+    // Calculate fail percentage and update LCD
+    failPercentage = (failCounter * 100) / dailyCounter;
+    isControlled = false;
+    updateLCD();
+
+    // Perform soft reset
+    softReset();
+
+    // Check for button press to save and adjust light value
+    if (digitalRead(BUTTON_B_PIN) == LOW) {
+      EEPROM.put(0, totalCounter);
+      isRunning = false;
+      adjustThreshold();
+    }
+  }
+}
+
+void pressButtonA(int angle) {
+    for (int pos = 0; pos <= angle; pos += 1) {
+        servo1.write(pos);
+        delay(15);
+    }
+    for (pos = angle; pos >= 0; pos -= 1) {
+        servo1.write(pos);
+        delay(15);
+    }
+}
+
+void pressButtonSTART(int angle) {
+    for (int pos = 0; pos <= angle; pos += 1) {
+        servo2.write(pos);
+        delay(15);
+    }
+    for (pos = angle; pos >= 0; pos -= 1) {
+        servo2.write(pos);
+        delay(15);
+    }
+}
+
+void pressButtonUP(int angle) {
+    for (int pos = angle; pos >= 0; pos -= 1) {
+        servo3.write(pos);
+        delay(15);
+    }
+    for (pos = 0; pos <= angle; pos += 1) {
+        servo3.write(pos);
+        delay(15);
+    }
+}
+
+void softReset() {
+    pressButtonSTART(33);
+    delay(8700);
+}
+
+void updateLCD() {
+    lcd.setCursor(0, 0);
+    lcd.print("SRs=");
+    lcd.setCursor(4, 0);
+    lcd.print(totalCounter);
+    lcd.setCursor(10, 1);
+    lcd.print("F=");
+    lcd.setCursor(12, 1);
+    lcd.print(failPercentage);
+    lcd.print("%");
+}
+
+void adjustThreshold() {
+    lcd.clear();
+    lcd.setCursor(0, 1);
+    lcd.print("Today's SRs: ");
+    lcd.setCursor(12, 1);
+    lcd.print(dailyCounter);
+
+    // Use left button to decrease threshold by 5, right button to increase by 5.
+    // Press both buttons to exit the menu.
+    for (int s = 0; s < 100000000; s++) {
+        if (digitalRead(BUTTON_A_PIN) == LOW) {
+            DETECTION_VALUE += 5;
+        }
+        if (digitalRead(BUTTON_B_PIN) == LOW) {
+            DETECTION_VALUE -= 5;
+        }
+        if (digitalRead(BUTTON_B_PIN) == LOW && digitalRead(BUTTON_A_PIN) == LOW) {
             break;
-          }
         }
-     
-        j=0;
-        y = 0;
-        wait = true;
-        lcd.clear();
-        
-        delay (3800);
-        pressbuttonA(23);
-        delay(1500);
-        pressbuttonA(23);
-        delay(1500);
-        pressbuttonA(23);
-        delay(7500);
-
-        
-        
-        
-        // Cycle that checks for the shininess
-        for (int i = 0; i < 1950; i++)
-        {
-            // Stream the light reading and the control value
-            val = analogRead(LIGHT);
-            lcd.setCursor(11, 0);
-            lcd.print("L=   ");
-            lcd.setCursor(13, 0);
-            lcd.print(val);
-            lcd.setCursor(0, 1);
-            lcd.print(control);
-
-            if (val < lval)
-            {
-                y++;
-                if (y > 2 and i > 1500 and control == false)
-                {
-                    shiny = true;
-                }
-                else
-                {
-                    if (y > 2 and i > 500)
-                    {
-                        control = true;
-                    }
-                }
-            }
-            else
-            {
-                y = 0;
-            }
-            delay(1);
-        }
-
-        // Variables update
-        y = 0;          // Resets the fake signal control
-        counter++;      // Updates counter
-        dailycounter++; // Updates daily counter
-
-        // Lcd counter update
         lcd.setCursor(0, 0);
-        lcd.print("SRs=");
-        lcd.setCursor(4, 0);
-        lcd.print(counter);
-
-        // If the shininess is true the cycle stops   
-        while (shiny == true) {
-            lcd.setCursor(0, 1);
-            lcd.print("*Shiny*   ;)");
-        }
-
-        // Checks if the SR failed or not
-        if (shiny != true and control == false)
-        {
-            fails++;
-            // If the fail % is better than 80% the cycle stops
-            if (FailPerc >= 80)
-            {
-                lcd.setCursor(0, 1);
-                lcd.print("Fix");
-                lcd.print(FailPerc);
-            }
-        }
-
-        // Transform fails counter to % of fails related to daily SRs
-        FailPerc = (fails * 100) / dailycounter;
-        control = false;
-
-        // Lcd fails update
-        lcd.setCursor(10, 1);
-        lcd.print("F=");
-        lcd.setCursor(12, 1);
-        lcd.print(FailPerc);
-        lcd.print("%");
-
-        // Soft Reset
-        pressbuttonSTART(33);
-        delay(8700);
-
-        // Press the left button in order to save and change light value
-        if (digitalRead(buttonBpin) == LOW)
-        {
-            EEPROM.put(0, counter);
-            beginning = false;
-            lcd.clear();
-            lcd.setCursor(0, 1);
-            lcd.print("Today's SRs: ");
-            lcd.setCursor(12, 1);
-            lcd.print(dailycounter);
-
-            // Left button to decrease by 5 or right button to increase by 5 | Press both to exit the menu
-            for (int s = 0; s < 100000000; s++)
-            {
-                if (digitalRead(buttonApin) == LOW)
-                {
-                    lval = lval + 5;
-                }
-                if (digitalRead(buttonBpin) == LOW)
-                {
-                    lval = lval - 5;
-                }
-                if (digitalRead(buttonBpin) == LOW and digitalRead(buttonApin) == LOW)
-                {
-                    break;
-                }
-                lcd.setCursor(0, 0);
-                lcd.print("Soglia=");
-                lcd.setCursor(7, 0);
-                lcd.print(lval);
-                delay(500);
-            }
-        }
+        lcd.print("Threshold=");
+        lcd.setCursor(10, 0);
+        lcd.print(DETECTION_VALUE);
+        delay(500);
     }
 }
